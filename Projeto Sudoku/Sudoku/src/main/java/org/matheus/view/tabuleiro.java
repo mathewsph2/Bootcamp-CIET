@@ -2,28 +2,312 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
+
+/* ---------------------------------------------------------------------------- */
+// 
+// 
+/* ---------------------------------------------------------------------------- */
+
+
+
+
 package org.matheus.view;
+
+import java.awt.Color;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import org.matheus.exception.SudokuException;
+import org.matheus.service.SudokuService;
+
+
+
 
 /**
  *
  * @author mathe
  */
 public class tabuleiro extends javax.swing.JFrame {
-    
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(tabuleiro.class.getName());
 
-    /**
-     * Creates new form tabuleiro
-     */
-    public tabuleiro() {
-        initComponents();
-        
-          this.setExtendedState(this.MAXIMIZED_BOTH);
-        this.setVisible(true); 
-        
-      
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(tabuleiro.class.getName());
+    
+    private SudokuService sudokuService = new SudokuService();
+
+    
+    public tabuleiro(String[] argsIniciais) {
+    initComponents();
+    this.setExtendedState(this.MAXIMIZED_BOTH);
+
+    mapearBotoes();
+    limparTodosOsBotoes();
+    aplicarBordasGrossas();
+
+    sudokuService.iniciarJogo(argsIniciais); // ✅ inicia o jogo no service
+    preencherComArgs(argsIniciais);          // ✅ preenche a UI
+
+    adicionarEventosDeClique();              // ✅ ativa cliques
+
+    this.setVisible(true);
+}
+
+    
+    
+    
+    
+    private JButton[][] botoes = new JButton[9][9];
+
+    
+    
+    
+/* ---------------------------------------------------------------------------- */
+// Limpa os valores inseridos inicialmente para formatação 
+// 
+/* ---------------------------------------------------------------------------- */
+    private void limparTodosOsBotoes() {
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            botoes[i][j].setText("");              // remove texto
+            botoes[i][j].setEnabled(true);         // habilita para edição
+            botoes[i][j].setBackground(null);      // cor padrão
+            botoes[i][j].setForeground(null);      // cor padrão
+        }
+    }
+}
+  
+    
+/* ---------------------------------------------------------------------------- */
+// Mapeamento dos Botões 
+// 
+/* ---------------------------------------------------------------------------- */
+    private void mapearBotoes() {
+        try {
+            for (int i = 0; i < 9; i++) {
+                for (int j = 0; j < 9; j++) {
+
+                    int numero = i * 9 + j + 1; // 1 a 81
+                    String nomeBotao = "Botao" + numero;
+
+                    // pega o campo da classe pelo nome
+                    java.lang.reflect.Field campo = this.getClass().getDeclaredField(nomeBotao);
+
+                    // obtém o JButton
+                    JButton botao = (JButton) campo.get(this);
+
+                    botoes[i][j] = botao;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
+    
+/* ---------------------------------------------------------------------------- */
+// Preenche os valores iniciais passado no args 
+// 
+/* ---------------------------------------------------------------------------- */
+    private void preencherComArgs(String[] argsIniciais) {
+        for (String arg : argsIniciais) {
+            String[] partes = arg.split(",");
+            int linha = Integer.parseInt(partes[0]);
+            int coluna = Integer.parseInt(partes[1]);
+            String valor = partes[2];
+
+            botoes[linha][coluna].setText(valor);
+            botoes[linha][coluna].setEnabled(false); // número fixo
+            
+            
+        }
+    }
+    
+    
+    
+    
+/* ---------------------------------------------------------------------------- */
+// 
+// 
+/* ---------------------------------------------------------------------------- */
+    private void adicionarEventosDeClique() {
+    for (int linha = 0; linha < 9; linha++) {
+        for (int coluna = 0; coluna < 9; coluna++) {
+
+            final int l = linha;
+            final int c = coluna;
+
+            botoes[l][c].addActionListener(e -> {
+                if (botoes[l][c].isEnabled()) {
+                    preencherCelula(l, c);
+                }
+            });
+        }
+    }
+}
+    
+    
+    
+    
+/* ---------------------------------------------------------------------------- */
+// 
+// 
+/* ---------------------------------------------------------------------------- */
+    
+    private void preencherCelula(int linha, int coluna) {
+    String valorStr = javax.swing.JOptionPane.showInputDialog(
+        this,
+        "Digite um número de 1 a 9:",
+        "Inserir número",
+        javax.swing.JOptionPane.PLAIN_MESSAGE
+    );
+
+    if (valorStr == null) return;
+
+    if (!valorStr.matches("[1-9]")) {
+        javax.swing.JOptionPane.showMessageDialog(this, "Digite apenas números de 1 a 9.");
+        return;
+    }
+
+    int valor = Integer.parseInt(valorStr);
+
+    try {
+        sudokuService.colocarNumero(linha, coluna, valor);
+        ErrosJogo.setText(String.valueOf(sudokuService.getErros()));
+
+
+        botoes[linha][coluna].setText(valorStr);
+        botoes[linha][coluna].setForeground(Color.BLACK);
+
+    } catch (SudokuException ex) {
+        
+       if (ex.getMessage().equals("preenchido")) {
+
+        int opcao = JOptionPane.showConfirmDialog(
+            this,
+            "A posição já está preenchida.\nDeseja remover o número existente?",
+            "Confirmar remoção",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (opcao == JOptionPane.YES_OPTION) {
+            //  remove o número
+            sudokuService.removerNumero(linha, coluna);
+            botoes[linha][coluna].setText("");
+
+            //  agora tenta inserir novamente
+            preencherCelula(linha, coluna);
+        }
+
+        return;
+    }
+
+    // outros erros (como número fixo)
+    JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+    
+    }
+}
+
+    
+    
+/* ---------------------------------------------------------------------------- */
+// 
+// 
+/* ---------------------------------------------------------------------------- */
+    
+    private void removerCelula(int linha, int coluna) {
+    try {
+        sudokuService.removerNumero(linha, coluna);
+        botoes[linha][coluna].setText("");
+    } catch (SudokuException ex) {
+        javax.swing.JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", javax.swing.JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+    
+
+/* ---------------------------------------------------------------------------- */
+// 
+// 
+/* ---------------------------------------------------------------------------- */
+    private void limparJogo() {
+    sudokuService.limparNaoFixos();
+
+    for (int l = 0; l < 9; l++) {
+        for (int c = 0; c < 9; c++) {
+            if (!sudokuService.isFixo(l, c)) {
+                botoes[l][c].setText("");
+                botoes[l][c].setEnabled(true);
+                botoes[l][c].setForeground(Color.BLACK);
+                botoes[l][c].setBackground(Color.WHITE);
+            }
+        }
+    }
+    ErrosJogo.setText(String.valueOf(sudokuService.getErros()));
+    atualizarStatus();
+
+}
+
+    
+    
+    
+    
+ /* ---------------------------------------------------------------------------- */
+// 
+// 
+/* ---------------------------------------------------------------------------- */   
+private void atualizarStatus() {
+    String status = sudokuService.statusDoJogo();
+    StatusJogo.setText(status);
+}
+
+    
+    
+
+/* ---------------------------------------------------------------------------- */
+// 
+// 
+/* ---------------------------------------------------------------------------- */ 
+private void finalizarJogo() {
+    try {
+        sudokuService.finalizarJogo();
+        javax.swing.JOptionPane.showMessageDialog(this, "Parabéns! Jogo finalizado com sucesso.");
+    } catch (SudokuException ex) {
+        javax.swing.JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", javax.swing.JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+    
+    
+    
+    
+/* ---------------------------------------------------------------------------- */
+// Aplicado Bordas de separação
+// 
+/* ---------------------------------------------------------------------------- */
+    private void aplicarBordasGrossas() {
+    for (int linha = 0; linha < 9; linha++) {
+        for (int coluna = 0; coluna < 9; coluna++) {
+
+            JButton botao = botoes[linha][coluna];
+
+            int top = 1;
+            int left = 1;
+            int bottom = 1;
+            int right = 1;
+
+            // Bordas grossas entre blocos 3x3
+            if (linha % 3 == 0) top = 4;        // linha superior do bloco
+            if (coluna % 3 == 0) left = 4;      // coluna esquerda do bloco
+            if (linha == 8) bottom = 4;         // última linha
+            if (coluna == 8) right = 4;         // última coluna
+
+            botao.setBorder(javax.swing.BorderFactory.createMatteBorder(
+                top, left, bottom, right, java.awt.Color.BLACK
+            ));
+        }
+    }
+}
+
+    
+    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -34,781 +318,890 @@ public class tabuleiro extends javax.swing.JFrame {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jPanel2 = new javax.swing.JPanel();
+        Titulo = new javax.swing.JLabel();
+        painelInferior = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        StatusJogo = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        ErrosJogo = new javax.swing.JLabel();
+        LimparJogo = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
-        jButton7 = new javax.swing.JButton();
-        jButton8 = new javax.swing.JButton();
-        jButton9 = new javax.swing.JButton();
-        jButton10 = new javax.swing.JButton();
-        jButton11 = new javax.swing.JButton();
-        jButton12 = new javax.swing.JButton();
-        jButton13 = new javax.swing.JButton();
-        jButton14 = new javax.swing.JButton();
-        jButton15 = new javax.swing.JButton();
-        jButton16 = new javax.swing.JButton();
-        jButton17 = new javax.swing.JButton();
-        jButton18 = new javax.swing.JButton();
-        jButton19 = new javax.swing.JButton();
-        jButton20 = new javax.swing.JButton();
-        jButton21 = new javax.swing.JButton();
-        jButton22 = new javax.swing.JButton();
-        jButton23 = new javax.swing.JButton();
-        jButton24 = new javax.swing.JButton();
-        jButton25 = new javax.swing.JButton();
-        jButton26 = new javax.swing.JButton();
-        jButton27 = new javax.swing.JButton();
-        jButton28 = new javax.swing.JButton();
-        jButton29 = new javax.swing.JButton();
-        jButton30 = new javax.swing.JButton();
-        jButton31 = new javax.swing.JButton();
-        jButton32 = new javax.swing.JButton();
-        jButton33 = new javax.swing.JButton();
-        jButton34 = new javax.swing.JButton();
-        jButton35 = new javax.swing.JButton();
-        jButton36 = new javax.swing.JButton();
-        jButton37 = new javax.swing.JButton();
-        jButton38 = new javax.swing.JButton();
-        jButton39 = new javax.swing.JButton();
-        jButton40 = new javax.swing.JButton();
-        jButton41 = new javax.swing.JButton();
-        jButton42 = new javax.swing.JButton();
-        jButton43 = new javax.swing.JButton();
-        jButton44 = new javax.swing.JButton();
-        jButton45 = new javax.swing.JButton();
-        jButton46 = new javax.swing.JButton();
-        jButton47 = new javax.swing.JButton();
-        jButton48 = new javax.swing.JButton();
-        jButton49 = new javax.swing.JButton();
-        jButton50 = new javax.swing.JButton();
-        jButton51 = new javax.swing.JButton();
-        jButton52 = new javax.swing.JButton();
-        jButton53 = new javax.swing.JButton();
-        jButton54 = new javax.swing.JButton();
-        jButton55 = new javax.swing.JButton();
-        jButton56 = new javax.swing.JButton();
-        jButton57 = new javax.swing.JButton();
-        jButton58 = new javax.swing.JButton();
-        jButton59 = new javax.swing.JButton();
-        jButton60 = new javax.swing.JButton();
-        jButton61 = new javax.swing.JButton();
-        jButton62 = new javax.swing.JButton();
-        jButton63 = new javax.swing.JButton();
-        jButton64 = new javax.swing.JButton();
-        jButton65 = new javax.swing.JButton();
-        jButton66 = new javax.swing.JButton();
-        jButton67 = new javax.swing.JButton();
-        jButton68 = new javax.swing.JButton();
-        jButton69 = new javax.swing.JButton();
-        jButton70 = new javax.swing.JButton();
-        jButton71 = new javax.swing.JButton();
-        jButton72 = new javax.swing.JButton();
-        jButton73 = new javax.swing.JButton();
-        jButton74 = new javax.swing.JButton();
-        jButton75 = new javax.swing.JButton();
-        jButton76 = new javax.swing.JButton();
-        jButton77 = new javax.swing.JButton();
-        jButton78 = new javax.swing.JButton();
-        jButton79 = new javax.swing.JButton();
-        jButton80 = new javax.swing.JButton();
-        jButton81 = new javax.swing.JButton();
+        Botao19 = new javax.swing.JButton();
+        Botao10 = new javax.swing.JButton();
+        Botao28 = new javax.swing.JButton();
+        Botao37 = new javax.swing.JButton();
+        Botao46 = new javax.swing.JButton();
+        Botao55 = new javax.swing.JButton();
+        Botao64 = new javax.swing.JButton();
+        Botao73 = new javax.swing.JButton();
+        Botao1 = new javax.swing.JButton();
+        Botao2 = new javax.swing.JButton();
+        Botao11 = new javax.swing.JButton();
+        Botao20 = new javax.swing.JButton();
+        Botao29 = new javax.swing.JButton();
+        Botao38 = new javax.swing.JButton();
+        Botao47 = new javax.swing.JButton();
+        Botao56 = new javax.swing.JButton();
+        Botao65 = new javax.swing.JButton();
+        Botao74 = new javax.swing.JButton();
+        Botao3 = new javax.swing.JButton();
+        Botao4 = new javax.swing.JButton();
+        Botao13 = new javax.swing.JButton();
+        Botao12 = new javax.swing.JButton();
+        Botao21 = new javax.swing.JButton();
+        Botao22 = new javax.swing.JButton();
+        Botao31 = new javax.swing.JButton();
+        Botao30 = new javax.swing.JButton();
+        Botao39 = new javax.swing.JButton();
+        Botao40 = new javax.swing.JButton();
+        Botao49 = new javax.swing.JButton();
+        Botao48 = new javax.swing.JButton();
+        Botao57 = new javax.swing.JButton();
+        Botao58 = new javax.swing.JButton();
+        Botao67 = new javax.swing.JButton();
+        Botao66 = new javax.swing.JButton();
+        Botao75 = new javax.swing.JButton();
+        Botao76 = new javax.swing.JButton();
+        Botao5 = new javax.swing.JButton();
+        Botao6 = new javax.swing.JButton();
+        Botao7 = new javax.swing.JButton();
+        Botao8 = new javax.swing.JButton();
+        Botao17 = new javax.swing.JButton();
+        Botao16 = new javax.swing.JButton();
+        Botao15 = new javax.swing.JButton();
+        Botao14 = new javax.swing.JButton();
+        Botao23 = new javax.swing.JButton();
+        Botao24 = new javax.swing.JButton();
+        Botao25 = new javax.swing.JButton();
+        Botao26 = new javax.swing.JButton();
+        Botao35 = new javax.swing.JButton();
+        Botao34 = new javax.swing.JButton();
+        Botao33 = new javax.swing.JButton();
+        Botao32 = new javax.swing.JButton();
+        Botao41 = new javax.swing.JButton();
+        Botao42 = new javax.swing.JButton();
+        Botao43 = new javax.swing.JButton();
+        Botao44 = new javax.swing.JButton();
+        Botao53 = new javax.swing.JButton();
+        Botao52 = new javax.swing.JButton();
+        Botao51 = new javax.swing.JButton();
+        Botao50 = new javax.swing.JButton();
+        Botao59 = new javax.swing.JButton();
+        Botao60 = new javax.swing.JButton();
+        Botao61 = new javax.swing.JButton();
+        Botao62 = new javax.swing.JButton();
+        Botao71 = new javax.swing.JButton();
+        Botao70 = new javax.swing.JButton();
+        Botao69 = new javax.swing.JButton();
+        Botao68 = new javax.swing.JButton();
+        Botao77 = new javax.swing.JButton();
+        Botao78 = new javax.swing.JButton();
+        Botao79 = new javax.swing.JButton();
+        Botao80 = new javax.swing.JButton();
+        Botao9 = new javax.swing.JButton();
+        Botao18 = new javax.swing.JButton();
+        Botao27 = new javax.swing.JButton();
+        Botao36 = new javax.swing.JButton();
+        Botao45 = new javax.swing.JButton();
+        Botao54 = new javax.swing.JButton();
+        Botao63 = new javax.swing.JButton();
+        Botao72 = new javax.swing.JButton();
+        Botao81 = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        BtRascunhoSuperior = new javax.swing.JButton();
+        BtRascunhoDireita = new javax.swing.JButton();
+        BtRascunhocentral = new javax.swing.JButton();
+        BtRascunhoInferior = new javax.swing.JButton();
+        BtRascunhoEsquerda = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Desafio de Projeto Sudoku");
 
         jPanel1.setBackground(new java.awt.Color(102, 102, 102));
 
-        jLabel1.setBackground(new java.awt.Color(255, 255, 255));
-        jLabel1.setFont(new java.awt.Font("Arial", 1, 24)); // NOI18N
-        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Desafio de Projeto Sudoku");
+        Titulo.setBackground(new java.awt.Color(255, 255, 255));
+        Titulo.setFont(new java.awt.Font("Arial", 1, 24)); // NOI18N
+        Titulo.setForeground(new java.awt.Color(255, 255, 255));
+        Titulo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        Titulo.setText("Desafio de Projeto Sudoku");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(Titulo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(31, 31, 31)
-                .addComponent(jLabel1)
+                .addComponent(Titulo)
                 .addContainerGap(36, Short.MAX_VALUE))
         );
 
-        jPanel2.setBackground(new java.awt.Color(102, 102, 102));
+        painelInferior.setBackground(new java.awt.Color(102, 102, 102));
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+        jLabel2.setBackground(new java.awt.Color(255, 255, 255));
+        jLabel2.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel2.setText("Status:");
+
+        StatusJogo.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        StatusJogo.setText("Não iniciado");
+
+        jLabel4.setBackground(new java.awt.Color(255, 255, 255));
+        jLabel4.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel4.setText("Erros:");
+
+        ErrosJogo.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        ErrosJogo.setText("0");
+
+        LimparJogo.setText("Limpar Jogo");
+        LimparJogo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                LimparJogoActionPerformed(evt);
+            }
+        });
+
+        jButton1.setText("Concluir Jogo");
+
+        javax.swing.GroupLayout painelInferiorLayout = new javax.swing.GroupLayout(painelInferior);
+        painelInferior.setLayout(painelInferiorLayout);
+        painelInferiorLayout.setHorizontalGroup(
+            painelInferiorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(painelInferiorLayout.createSequentialGroup()
+                .addGap(67, 67, 67)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(StatusJogo)
+                .addGap(71, 71, 71)
+                .addComponent(jLabel4)
+                .addGap(18, 18, 18)
+                .addComponent(ErrosJogo)
+                .addGap(135, 135, 135)
+                .addComponent(LimparJogo)
+                .addGap(59, 59, 59)
+                .addComponent(jButton1)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 56, Short.MAX_VALUE)
+        painelInferiorLayout.setVerticalGroup(
+            painelInferiorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(painelInferiorLayout.createSequentialGroup()
+                .addGap(19, 19, 19)
+                .addGroup(painelInferiorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(StatusJogo)
+                    .addComponent(jLabel4)
+                    .addComponent(ErrosJogo)
+                    .addComponent(LimparJogo)
+                    .addComponent(jButton1))
+                .addContainerGap(21, Short.MAX_VALUE))
         );
 
-        jButton1.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton1.setText("9");
+        Botao19.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao19.setText("9");
 
-        jButton2.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton2.setText("9");
+        Botao10.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao10.setText("9");
 
-        jButton3.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton3.setText("9");
+        Botao28.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao28.setText("9");
 
-        jButton4.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton4.setText("9");
+        Botao37.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao37.setText("9");
 
-        jButton5.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton5.setText("9");
+        Botao46.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao46.setText("9");
 
-        jButton6.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton6.setText("9");
+        Botao55.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao55.setText("9");
 
-        jButton7.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton7.setText("9");
+        Botao64.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao64.setText("9");
 
-        jButton8.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton8.setText("9");
+        Botao73.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao73.setText("9");
 
-        jButton9.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton9.setText("9");
+        Botao1.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao1.setText("9");
 
-        jButton10.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton10.setText("9");
+        Botao2.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao2.setText("9");
 
-        jButton11.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton11.setText("9");
+        Botao11.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao11.setText("9");
 
-        jButton12.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton12.setText("9");
+        Botao20.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao20.setText("9");
 
-        jButton13.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton13.setText("9");
+        Botao29.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao29.setText("9");
 
-        jButton14.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton14.setText("9");
+        Botao38.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao38.setText("9");
 
-        jButton15.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton15.setText("9");
+        Botao47.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao47.setText("9");
 
-        jButton16.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton16.setText("9");
+        Botao56.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao56.setText("9");
 
-        jButton17.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton17.setText("9");
+        Botao65.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao65.setText("9");
 
-        jButton18.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton18.setText("9");
+        Botao74.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao74.setText("9");
 
-        jButton19.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton19.setText("9");
+        Botao3.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao3.setText("9");
 
-        jButton20.setBackground(new java.awt.Color(153, 153, 153));
-        jButton20.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton20.setText("9");
+        Botao4.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao4.setText("9");
 
-        jButton21.setBackground(new java.awt.Color(153, 153, 153));
-        jButton21.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton21.setText("9");
+        Botao13.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao13.setText("9");
 
-        jButton22.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton22.setText("9");
+        Botao12.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao12.setText("9");
 
-        jButton23.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton23.setText("9");
+        Botao21.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao21.setText("9");
 
-        jButton24.setBackground(new java.awt.Color(153, 153, 153));
-        jButton24.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton24.setText("9");
+        Botao22.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao22.setText("9");
 
-        jButton25.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton25.setText("9");
+        Botao31.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao31.setText("9");
 
-        jButton26.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton26.setText("9");
+        Botao30.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao30.setText("9");
 
-        jButton27.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton27.setText("9");
+        Botao39.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao39.setText("9");
 
-        jButton28.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton28.setText("9");
+        Botao40.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao40.setText("9");
 
-        jButton29.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton29.setText("9");
+        Botao49.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao49.setText("9");
 
-        jButton30.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton30.setText("9");
+        Botao48.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao48.setText("9");
 
-        jButton31.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton31.setText("9");
+        Botao57.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao57.setText("9");
 
-        jButton32.setBackground(new java.awt.Color(204, 204, 204));
-        jButton32.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton32.setText("9");
+        Botao58.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao58.setText("9");
 
-        jButton33.setBackground(new java.awt.Color(204, 204, 204));
-        jButton33.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton33.setText("9");
+        Botao67.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao67.setText("9");
 
-        jButton34.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton34.setText("9");
+        Botao66.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao66.setText("9");
 
-        jButton35.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton35.setText("9");
+        Botao75.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao75.setText("9");
 
-        jButton36.setBackground(new java.awt.Color(204, 204, 204));
-        jButton36.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton36.setText("9");
+        Botao76.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao76.setText("9");
 
-        jButton37.setBackground(new java.awt.Color(153, 153, 153));
-        jButton37.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton37.setText("9");
+        Botao5.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao5.setText("9");
 
-        jButton38.setBackground(new java.awt.Color(153, 153, 153));
-        jButton38.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton38.setText("9");
+        Botao6.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao6.setText("9");
 
-        jButton39.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton39.setText("9");
+        Botao7.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao7.setText("9");
 
-        jButton40.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton40.setText("9");
+        Botao8.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao8.setText("9");
 
-        jButton41.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton41.setText("9");
+        Botao17.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao17.setText("9");
 
-        jButton42.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton42.setText("9");
+        Botao16.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao16.setText("9");
 
-        jButton43.setBackground(new java.awt.Color(153, 153, 153));
-        jButton43.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton43.setText("9");
+        Botao15.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao15.setText("9");
 
-        jButton44.setBackground(new java.awt.Color(153, 153, 153));
-        jButton44.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton44.setText("9");
+        Botao14.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao14.setText("9");
 
-        jButton45.setBackground(new java.awt.Color(153, 153, 153));
-        jButton45.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton45.setText("9");
+        Botao23.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao23.setText("9");
 
-        jButton46.setBackground(new java.awt.Color(153, 153, 153));
-        jButton46.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton46.setText("9");
+        Botao24.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao24.setText("9");
 
-        jButton47.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton47.setText("9");
+        Botao25.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao25.setText("9");
 
-        jButton48.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton48.setText("9");
+        Botao26.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao26.setText("9");
 
-        jButton49.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton49.setText("9");
+        Botao35.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao35.setText("9");
 
-        jButton50.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton50.setText("9");
+        Botao34.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao34.setText("9");
 
-        jButton51.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton51.setText("9");
+        Botao33.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao33.setText("9");
 
-        jButton52.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton52.setText("9");
+        Botao32.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao32.setText("9");
 
-        jButton53.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton53.setText("9");
+        Botao41.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao41.setText("9");
 
-        jButton54.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton54.setText("9");
+        Botao42.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao42.setText("9");
 
-        jButton55.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton55.setText("9");
+        Botao43.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao43.setText("9");
 
-        jButton56.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton56.setText("9");
+        Botao44.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao44.setText("9");
 
-        jButton57.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton57.setText("9");
+        Botao53.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao53.setText("9");
 
-        jButton58.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton58.setText("9");
+        Botao52.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao52.setText("9");
 
-        jButton59.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton59.setText("9");
+        Botao51.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao51.setText("9");
 
-        jButton60.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton60.setText("9");
+        Botao50.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao50.setText("9");
 
-        jButton61.setBackground(new java.awt.Color(204, 204, 204));
-        jButton61.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton61.setText("9");
+        Botao59.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao59.setText("9");
 
-        jButton62.setBackground(new java.awt.Color(204, 204, 204));
-        jButton62.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton62.setText("9");
+        Botao60.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao60.setText("9");
 
-        jButton63.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton63.setText("9");
+        Botao61.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao61.setText("9");
 
-        jButton64.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton64.setText("9");
+        Botao62.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao62.setText("9");
 
-        jButton65.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton65.setText("9");
+        Botao71.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao71.setText("9");
 
-        jButton66.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton66.setText("9");
+        Botao70.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao70.setText("9");
 
-        jButton67.setBackground(new java.awt.Color(204, 204, 204));
-        jButton67.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton67.setText("9");
+        Botao69.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao69.setText("9");
 
-        jButton68.setBackground(new java.awt.Color(204, 204, 204));
-        jButton68.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton68.setText("9");
+        Botao68.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao68.setText("9");
 
-        jButton69.setBackground(new java.awt.Color(204, 204, 204));
-        jButton69.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton69.setText("9");
+        Botao77.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao77.setText("9");
 
-        jButton70.setBackground(new java.awt.Color(204, 204, 204));
-        jButton70.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton70.setText("9");
+        Botao78.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao78.setText("9");
 
-        jButton71.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton71.setText("9");
+        Botao79.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao79.setText("9");
 
-        jButton72.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton72.setText("9");
+        Botao80.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao80.setText("9");
 
-        jButton73.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton73.setText("9");
+        Botao9.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao9.setText("9");
 
-        jButton74.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton74.setText("9");
+        Botao18.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao18.setText("9");
 
-        jButton75.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton75.setText("9");
+        Botao27.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao27.setText("9");
 
-        jButton76.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton76.setText("9");
+        Botao36.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao36.setText("9");
 
-        jButton77.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton77.setText("9");
+        Botao45.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao45.setText("9");
 
-        jButton78.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton78.setText("9");
+        Botao54.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao54.setText("9");
 
-        jButton79.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton79.setText("9");
+        Botao63.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao63.setText("9");
 
-        jButton80.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton80.setText("9");
+        Botao72.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao72.setText("9");
 
-        jButton81.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
-        jButton81.setText("9");
+        Botao81.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        Botao81.setText("9");
+
+        jLabel1.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        jLabel1.setText("Rascunho:");
+
+        BtRascunhoSuperior.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        BtRascunhoSuperior.setText("9");
+
+        BtRascunhoDireita.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        BtRascunhoDireita.setText("9");
+
+        BtRascunhocentral.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        BtRascunhocentral.setText("9");
+
+        BtRascunhoInferior.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        BtRascunhoInferior.setText("9");
+
+        BtRascunhoEsquerda.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        BtRascunhoEsquerda.setText("9");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(painelInferior, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(405, Short.MAX_VALUE)
+                .addGap(54, 54, 54)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton6, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton8, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(BtRascunhoEsquerda, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(BtRascunhoSuperior, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(BtRascunhocentral, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(BtRascunhoDireita, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(BtRascunhoInferior, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(jLabel1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 180, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(Botao1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao46, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao64, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao55, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao73, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao10, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao28, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao19, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao37, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton10, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton15, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton17, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton16, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton18, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton11, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton13, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton12, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton14, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Botao2, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao47, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao65, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao56, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao74, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao11, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao29, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao20, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao38, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton19, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton30, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton34, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton31, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton35, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton22, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton26, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton23, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton27, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Botao3, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao48, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao66, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao57, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao75, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao12, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao30, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao21, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao39, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton20, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton29, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton33, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton32, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton36, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton21, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton25, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton24, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton28, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Botao4, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao49, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao67, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao58, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao76, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao13, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao31, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao22, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao40, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton37, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton60, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton68, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton61, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton69, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton44, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton52, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton45, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton53, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Botao5, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao50, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao68, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao59, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao77, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao14, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao32, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao23, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao41, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton38, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton59, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton67, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton62, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton70, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton43, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton51, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton46, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton54, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Botao6, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao51, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao69, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao60, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao78, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao15, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao33, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao24, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao42, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton39, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton58, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton66, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton63, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton71, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton42, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton50, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton47, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton55, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Botao7, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao52, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao70, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao61, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao79, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao16, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao34, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao25, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao43, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton40, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton57, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton65, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton64, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton72, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton41, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton49, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton48, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton56, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Botao8, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao53, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao71, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao62, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao80, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao17, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao35, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao26, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao44, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton73, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton78, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton80, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton79, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton81, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton74, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton76, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton75, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton77, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Botao9, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao54, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao72, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao63, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao81, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao18, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao36, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao27, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Botao45, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(394, 394, 394))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 32, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 24, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao1, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton6, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton8, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(Botao10, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel1))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(Botao19, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(Botao28, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(Botao37, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(Botao46, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(Botao55, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(Botao64, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(Botao73, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(29, 29, 29)
+                                .addComponent(BtRascunhoSuperior, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(BtRascunhoDireita, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(BtRascunhoEsquerda, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(BtRascunhocentral, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(BtRascunhoInferior, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton10, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao2, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton11, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao11, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton12, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao20, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton13, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao29, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton14, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao38, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton15, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao47, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton16, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao56, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton17, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao65, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton18, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(Botao74, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton19, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao3, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton22, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao12, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton23, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao21, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton26, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao30, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton27, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao39, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton30, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao48, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton31, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao57, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton34, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao66, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton35, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(Botao75, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton20, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao4, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton21, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao13, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton24, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao22, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton25, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao31, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton28, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao40, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton29, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao49, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton32, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao58, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton33, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao67, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton36, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(Botao76, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton37, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao5, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton44, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao14, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton45, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao23, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton52, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao32, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton53, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao41, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton60, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao50, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton61, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao59, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton68, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao68, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton69, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(Botao77, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton38, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao6, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton43, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao15, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton46, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao24, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton51, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao33, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton54, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao42, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton59, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao51, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton62, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao60, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton67, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao69, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton70, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(Botao78, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton39, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao7, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton42, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao16, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton47, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao25, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton50, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao34, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton55, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao43, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton58, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao52, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton63, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao61, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton66, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao70, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton71, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(Botao79, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton40, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao8, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton41, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao17, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton48, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao26, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton49, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao35, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton56, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao44, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton57, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao53, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton64, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao62, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton65, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao71, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton72, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(Botao80, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton73, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao9, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton74, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao18, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton75, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao27, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton76, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao36, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton77, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao45, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton78, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao54, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton79, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao63, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton80, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Botao72, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton81, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(Botao81, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(35, 35, 35)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(painelInferior, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void LimparJogoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LimparJogoActionPerformed
+        limparJogo();
+         atualizarStatus();
+    }//GEN-LAST:event_LimparJogoActionPerformed
+
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Windows".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
+    public static void main(String[] args) {
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new tabuleiro().setVisible(true));
+        String[] valoresIniciais = {
+            // Linha 0
+            "0,0,9", "0,1,5", "0,2,8", "0,7,2",
+            // Linha 1
+            "1,3,2", "1,4,5", "1,5,6", "1,7,4",
+            // Linha 2
+            "2,2,6", "2,6,5", "2,7,1", "2,8,7",
+            // Linha 3
+            "3,0,6", "3,3,3", "3,4,7", "3,5,8",
+            // Linha 4
+            "4,0,7", "4,1,8", "4,2,4", "4,6,9", "4,7,3", "4,8,2",
+            // Linha 5
+            "5,2,4", "5,3,2", "5,4,9", "5,8,8",
+            // Linha 6
+            "6,0,4", "6,1,9", "6,2,2", "6,6,1",
+            // Linha 7
+            "7,1,6", "7,3,5", "7,4,8", "7,5,1",
+            // Linha 8
+            "8,1,1", "8,6,7", "8,7,6", "8,8,3"
+
+        };
+
+        java.awt.EventQueue.invokeLater(() -> new tabuleiro(valoresIniciais));
     }
 
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton Botao1;
+    private javax.swing.JButton Botao10;
+    private javax.swing.JButton Botao11;
+    private javax.swing.JButton Botao12;
+    private javax.swing.JButton Botao13;
+    private javax.swing.JButton Botao14;
+    private javax.swing.JButton Botao15;
+    private javax.swing.JButton Botao16;
+    private javax.swing.JButton Botao17;
+    private javax.swing.JButton Botao18;
+    private javax.swing.JButton Botao19;
+    private javax.swing.JButton Botao2;
+    private javax.swing.JButton Botao20;
+    private javax.swing.JButton Botao21;
+    private javax.swing.JButton Botao22;
+    private javax.swing.JButton Botao23;
+    private javax.swing.JButton Botao24;
+    private javax.swing.JButton Botao25;
+    private javax.swing.JButton Botao26;
+    private javax.swing.JButton Botao27;
+    private javax.swing.JButton Botao28;
+    private javax.swing.JButton Botao29;
+    private javax.swing.JButton Botao3;
+    private javax.swing.JButton Botao30;
+    private javax.swing.JButton Botao31;
+    private javax.swing.JButton Botao32;
+    private javax.swing.JButton Botao33;
+    private javax.swing.JButton Botao34;
+    private javax.swing.JButton Botao35;
+    private javax.swing.JButton Botao36;
+    private javax.swing.JButton Botao37;
+    private javax.swing.JButton Botao38;
+    private javax.swing.JButton Botao39;
+    private javax.swing.JButton Botao4;
+    private javax.swing.JButton Botao40;
+    private javax.swing.JButton Botao41;
+    private javax.swing.JButton Botao42;
+    private javax.swing.JButton Botao43;
+    private javax.swing.JButton Botao44;
+    private javax.swing.JButton Botao45;
+    private javax.swing.JButton Botao46;
+    private javax.swing.JButton Botao47;
+    private javax.swing.JButton Botao48;
+    private javax.swing.JButton Botao49;
+    private javax.swing.JButton Botao5;
+    private javax.swing.JButton Botao50;
+    private javax.swing.JButton Botao51;
+    private javax.swing.JButton Botao52;
+    private javax.swing.JButton Botao53;
+    private javax.swing.JButton Botao54;
+    private javax.swing.JButton Botao55;
+    private javax.swing.JButton Botao56;
+    private javax.swing.JButton Botao57;
+    private javax.swing.JButton Botao58;
+    private javax.swing.JButton Botao59;
+    private javax.swing.JButton Botao6;
+    private javax.swing.JButton Botao60;
+    private javax.swing.JButton Botao61;
+    private javax.swing.JButton Botao62;
+    private javax.swing.JButton Botao63;
+    private javax.swing.JButton Botao64;
+    private javax.swing.JButton Botao65;
+    private javax.swing.JButton Botao66;
+    private javax.swing.JButton Botao67;
+    private javax.swing.JButton Botao68;
+    private javax.swing.JButton Botao69;
+    private javax.swing.JButton Botao7;
+    private javax.swing.JButton Botao70;
+    private javax.swing.JButton Botao71;
+    private javax.swing.JButton Botao72;
+    private javax.swing.JButton Botao73;
+    private javax.swing.JButton Botao74;
+    private javax.swing.JButton Botao75;
+    private javax.swing.JButton Botao76;
+    private javax.swing.JButton Botao77;
+    private javax.swing.JButton Botao78;
+    private javax.swing.JButton Botao79;
+    private javax.swing.JButton Botao8;
+    private javax.swing.JButton Botao80;
+    private javax.swing.JButton Botao81;
+    private javax.swing.JButton Botao9;
+    private javax.swing.JButton BtRascunhoDireita;
+    private javax.swing.JButton BtRascunhoEsquerda;
+    private javax.swing.JButton BtRascunhoInferior;
+    private javax.swing.JButton BtRascunhoSuperior;
+    private javax.swing.JButton BtRascunhocentral;
+    private javax.swing.JLabel ErrosJogo;
+    private javax.swing.JButton LimparJogo;
+    private javax.swing.JLabel StatusJogo;
+    private javax.swing.JLabel Titulo;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton10;
-    private javax.swing.JButton jButton11;
-    private javax.swing.JButton jButton12;
-    private javax.swing.JButton jButton13;
-    private javax.swing.JButton jButton14;
-    private javax.swing.JButton jButton15;
-    private javax.swing.JButton jButton16;
-    private javax.swing.JButton jButton17;
-    private javax.swing.JButton jButton18;
-    private javax.swing.JButton jButton19;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton20;
-    private javax.swing.JButton jButton21;
-    private javax.swing.JButton jButton22;
-    private javax.swing.JButton jButton23;
-    private javax.swing.JButton jButton24;
-    private javax.swing.JButton jButton25;
-    private javax.swing.JButton jButton26;
-    private javax.swing.JButton jButton27;
-    private javax.swing.JButton jButton28;
-    private javax.swing.JButton jButton29;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton30;
-    private javax.swing.JButton jButton31;
-    private javax.swing.JButton jButton32;
-    private javax.swing.JButton jButton33;
-    private javax.swing.JButton jButton34;
-    private javax.swing.JButton jButton35;
-    private javax.swing.JButton jButton36;
-    private javax.swing.JButton jButton37;
-    private javax.swing.JButton jButton38;
-    private javax.swing.JButton jButton39;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton40;
-    private javax.swing.JButton jButton41;
-    private javax.swing.JButton jButton42;
-    private javax.swing.JButton jButton43;
-    private javax.swing.JButton jButton44;
-    private javax.swing.JButton jButton45;
-    private javax.swing.JButton jButton46;
-    private javax.swing.JButton jButton47;
-    private javax.swing.JButton jButton48;
-    private javax.swing.JButton jButton49;
-    private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton50;
-    private javax.swing.JButton jButton51;
-    private javax.swing.JButton jButton52;
-    private javax.swing.JButton jButton53;
-    private javax.swing.JButton jButton54;
-    private javax.swing.JButton jButton55;
-    private javax.swing.JButton jButton56;
-    private javax.swing.JButton jButton57;
-    private javax.swing.JButton jButton58;
-    private javax.swing.JButton jButton59;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton60;
-    private javax.swing.JButton jButton61;
-    private javax.swing.JButton jButton62;
-    private javax.swing.JButton jButton63;
-    private javax.swing.JButton jButton64;
-    private javax.swing.JButton jButton65;
-    private javax.swing.JButton jButton66;
-    private javax.swing.JButton jButton67;
-    private javax.swing.JButton jButton68;
-    private javax.swing.JButton jButton69;
-    private javax.swing.JButton jButton7;
-    private javax.swing.JButton jButton70;
-    private javax.swing.JButton jButton71;
-    private javax.swing.JButton jButton72;
-    private javax.swing.JButton jButton73;
-    private javax.swing.JButton jButton74;
-    private javax.swing.JButton jButton75;
-    private javax.swing.JButton jButton76;
-    private javax.swing.JButton jButton77;
-    private javax.swing.JButton jButton78;
-    private javax.swing.JButton jButton79;
-    private javax.swing.JButton jButton8;
-    private javax.swing.JButton jButton80;
-    private javax.swing.JButton jButton81;
-    private javax.swing.JButton jButton9;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel painelInferior;
     // End of variables declaration//GEN-END:variables
 }
