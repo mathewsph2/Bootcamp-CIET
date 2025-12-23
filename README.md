@@ -16,6 +16,10 @@ DESAFIO DE PROJETO: Contribuindo em um projeto Open Source no GitHub
 
 MENTORIA: Live de lançamento - CI&T - Backend com Java & AWS 
 
+### 💾 Ferramentas
+
+📍 https://readme.so/pt/editor
+
 
 
 ## Sintaxe básica com java 
@@ -93,11 +97,11 @@ JDBC: Explorando Persistência de Dados com Java
 
 Desafio de Projeto: Criando seu Board de Tarefas com Java 
 
-### Ferramentas: 
+### 💾 Ferramentas: 
 
-DBeaver - Gerenciador de Banco de Dados
+📍 DBeaver - Gerenciador de Banco de Dados
 
-Biblioteca Flyway - Migrations do Banco de Dados
+📍 Biblioteca Flyway - Migrations do Banco de Dados
 
 
 
