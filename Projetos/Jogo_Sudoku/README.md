@@ -1,4 +1,4 @@
-# Jogo de Sudoku
+# 🧩Jogo de Sudoku
 
 Escreva um código que irá criar um jogo de sudoku
 
@@ -6,7 +6,7 @@ https://pt.wikipedia.org/wiki/Sudoku
 
 
 
-## Requisitos
+## 🎯Requisitos
 
 Deve-se ter um menu interativo onde poderemos escolher entre as seguintes opções:
     1. Iniciar um novo o jogo: Deve-se exibir na tela o jogo inicial, com os espaços preenchidos somente pelos números iniciais (usar os args do método main para informar os números iniciais e suas devidas posiçõers);
@@ -24,12 +24,12 @@ Deve-se ter um menu interativo onde poderemos escolher entre as seguintes opçõ
 
 
 
-## Extras (requisitos opcionais)
+## 🎯Extras (requisitos opcionais)
 
 1. Usar algum ambiente gráfico ( AWT, Swing) para criação do jogo
 2. ter a opção de colocar números de rascunho nos quadrados, para isso deve-se seguir o modelo proposto na sessão modelo de rascunho:
 
 
-### Referência:
+### 📖Referência
 
 https://github.com/digitalinnovationone/exercicios-java-basico/blob/main/projetos/2%20-%20Programa%C3%A7%C3%A3o%20Orientada%20a%20Objetos%20e%20Estruturas%20de%20Dados%20com%20Java.md
