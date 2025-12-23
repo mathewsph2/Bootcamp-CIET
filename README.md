@@ -99,6 +99,8 @@ Desafio de Projeto: Criando seu Board de Tarefas com Java
 
 ### 💾 Ferramentas: 
 
+📍 quick.databasediagrams.com
+
 📍 DBeaver - Gerenciador de Banco de Dados
 
 📍 Biblioteca Flyway - Migrations do Banco de Dados
