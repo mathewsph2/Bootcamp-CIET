@@ -16,9 +16,11 @@ DESAFIO DE PROJETO: Contribuindo em um projeto Open Source no GitHub
 
 MENTORIA: Live de lançamento - CI&T - Backend com Java & AWS 
 
-### 💾 Ferramentas
+### 💾 Ferramentas/Sites
 
-📍 https://readme.so/pt/editor
+📍 https://readme.so/pt/editor   -> Editor de README.md 
+
+📍 https://git-scm.com/  ->  Documentação do Git
 
 ### 🎓 Instrutores/Mentores
 
