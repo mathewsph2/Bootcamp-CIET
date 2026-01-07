@@ -20,6 +20,12 @@ MENTORIA: Live de lançamento - CI&T - Backend com Java & AWS
 
 📍 https://readme.so/pt/editor
 
+### 🎓 Instrutores/Mentores
+
+🟦 https://www.linkedin.com/in/elidiana/
+
+🟦 https://github.com/elidianaandrade/
+
 
 
 ## 🚀 Sintaxe básica com java 
