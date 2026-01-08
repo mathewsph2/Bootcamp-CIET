@@ -54,7 +54,17 @@ Praticando com Collections e outras classes úteis do Java
 
 DESAFIO DE CÓDIGO: Programação orientada a objetos com Java 
 
-DESAFIO DE PROJETO: Abstraindo um Bootcamp usando orientação a objetos em Java 
+DESAFIO DE PROJETO: Abstraindo um Bootcamp usando orientação a objetos em Java
+
+### 🎓 Instrutores/Mentores
+
+🟦 https://github.com/cami-la/
+
+🟦 https://www.linkedin.com/in/cami-la/  
+
+🟦 https://www.instagram.com/estudant.i/  
+
+🟦 https://www.instagram.com/camimi_la/
 
 
 
