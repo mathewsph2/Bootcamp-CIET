@@ -62,8 +62,6 @@ DESAFIO DE PROJETO: Abstraindo um Bootcamp usando orientação a objetos em Java
 
 🟦 https://www.linkedin.com/in/cami-la/  
 
-🟦 https://www.instagram.com/estudant.i/  
-
 🟦 https://www.instagram.com/camimi_la/
 
 
