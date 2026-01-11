@@ -1,6 +1,33 @@
-# 💻 Bootcamp CI&T
+# 💻 Bootcamp CI&T — Backend com Java e AWS  
+
+---
+
+## 📌 Sobre  
+Este repositório reúne conteúdos, referências e atividades do Bootcamp "CI&T — Backend com Java e AWS". O objetivo é apresentar fundamentos sólidos de desenvolvimento backend com Java, boas práticas de programação orientada a objetos, integração com bancos de dados, desenvolvimento de APIs REST e uso de serviços na AWS — com foco em desafios práticos e projetos aplicados.
+
+## 🎯 Objetivos
+
+- Dominar os fundamentos da linguagem Java e sua sintaxe básica.
+
+- Aplicar conceitos de Programação Orientada a Objetos (POO) com Java.
+
+- Utilizar ferramentas de versionamento como Git e GitHub em projetos reais.
+
+- Desenvolver APIs REST seguras e documentadas com Spring Boot.
+
+- Integrar aplicações Java com bancos de dados relacionais e NoSQL.
+
+- Explorar serviços essenciais da AWS para aplicações modernas.
+
+- Participar de projetos Open Source e construir um portfólio profissional.
 
 
+
+## 🎓 Público-alvo  
+Estudantes, desenvolvedores iniciantes e profissionais que desejam aprofundar seus conhecimentos em backend com Java, desenvolvimento de APIs, integração com bancos de dados e uso de serviços em nuvem com AWS.
+
+
+---
 
 ## 🗂️ Princípios de Desenvolvimento de Aplicações 
 
