@@ -2,7 +2,7 @@
 
 
 
-## 🚀 Princípios de Desenvolvimento de Aplicações 
+## 🗂️ Princípios de Desenvolvimento de Aplicações 
 
 Introdução ao Bootcamp CI&T - Backend com Java e AWS
 
@@ -16,7 +16,7 @@ DESAFIO DE PROJETO: Contribuindo em um projeto Open Source no GitHub
 
 MENTORIA: Live de lançamento - CI&T - Backend com Java & AWS 
 
-### 💾 Ferramentas/Sites
+### 🧰 Ferramentas & Recursos
 
 📍 https://readme.so/pt/editor   -> Editor de README.md 
 
@@ -30,7 +30,7 @@ MENTORIA: Live de lançamento - CI&T - Backend com Java & AWS
 
 
 
-## 🚀 Sintaxe básica com java 
+## 🗂️ Sintaxe básica com java 
 
 Fundamentos da linguagem de programação Java 
 
@@ -42,7 +42,7 @@ DESAFIO DE CÓDIGO: Entendendo Sintaxe básica e estrutura em Java
 
 
 
-## 🚀 Programação Orientada a Objetos 
+## 🗂️ Programação Orientada a Objetos 
 
 Java e a Arte da Abstração com classes e encapsulamento 
 
@@ -66,7 +66,7 @@ DESAFIO DE PROJETO: Abstraindo um Bootcamp usando orientação a objetos em Java
 
 
 
-## 🚀 Gerenciamento de Exceções, IO e Dependências em Java 
+## 🗂️ Gerenciamento de Exceções, IO e Dependências em Java 
 
 
 Debugging e Tratamento de Exceções em Java 
@@ -76,7 +76,7 @@ Simplificando I/O de Arquivos e Diretórios com Java
 Gerenciando Dependências com Maven e Gradle 
 
 
-## 🚀 Coleções e Strem em Java 
+## 🗂️ Coleções e Strem em Java 
 
 Conhecendo Collections Java 
 
@@ -86,7 +86,7 @@ Desafio de Projeto: Criando um jogo SUDOKU em Java
 
 
 
-## 🚀 Desenvolvimento de APIs
+## 🗂️ Desenvolvimento de APIs
 
 Introdução ao desenvolvimento de API
 
@@ -100,7 +100,7 @@ Desafio de Código: Entendendo o Desenvolvimento de APIs com Java
 
 Desafio de Projeto: Design Patterns com Java: Dos Clássicos (GoF) ao Spring Framework
 
-### 💾 Ferramentas: 
+### 🧰 Ferramentas & Recursos
 
 📍 https://start.spring.io/
 
@@ -108,7 +108,7 @@ Desafio de Projeto: Design Patterns com Java: Dos Clássicos (GoF) ao Spring Fra
 
 
 
-## 🚀 Integração Java com Banco de Dados 
+## 🗂️ Integração Java com Banco de Dados 
 
 Introdução Banco de Dados 
 
@@ -120,7 +120,7 @@ JDBC: Explorando Persistência de Dados com Java
 
 Desafio de Projeto: Criando seu Board de Tarefas com Java 
 
-### 💾 Ferramentas: 
+### 🧰 Ferramentas & Recursos
 
 📍 quick.databasediagrams.com
 
@@ -132,7 +132,7 @@ Desafio de Projeto: Criando seu Board de Tarefas com Java
 
 
 
-## 🚀 Introdução a Cloud da AWS
+## 🗂️ Introdução a Cloud da AWS
 
 Introdução ao Conceito de Cloud 
 
@@ -152,4 +152,15 @@ Monitoramento e Análise da AWS
 
 
 
+--- 
+## 🤝 Como contribuir
+- Abra uma issue para sugerir melhorias ou reportar erros.
+- Faça um fork e envie um Pull Request para contribuições de conteúdo (ex.: adicionar materiais, slides, exercícios).
+- Use padrões de commit claros e descreva a motivação da mudança no PR.
 
+
+
+--- 
+## 📬 Contato
+- Coordenador / Maintainer: @mathewsph2 (GitHub)  
+- Para dúvidas e sugestões: abra uma issue no repositório
