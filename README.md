@@ -182,7 +182,7 @@ Monitoramento e Análise da AWS
 --- 
 ## 🤝 Como contribuir
 - Abra uma issue para sugerir melhorias ou reportar erros.
-- Faça um fork e envie um Pull Request para contribuições de conteúdo (ex.: adicionar materiais, slides, exercícios).
+- Faça um fork e envie um Pull Request para contribuições de conteúdo.
 - Use padrões de commit claros e descreva a motivação da mudança no PR.
 
 
