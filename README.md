@@ -45,9 +45,9 @@ MENTORIA: Live de lançamento - CI&T - Backend com Java & AWS
 
 ### 🧰 Ferramentas & Recursos
 
-📍 https://readme.so/pt/editor   -> Editor de README.md 
+- https://readme.so/pt/editor   -> Editor de README.md 
 
-📍 https://git-scm.com/  ->  Documentação do Git
+- https://git-scm.com/  ->  Documentação do Git
 
 ### 🎓 Instrutores/Mentores
 
@@ -129,9 +129,9 @@ Desafio de Projeto: Design Patterns com Java: Dos Clássicos (GoF) ao Spring Fra
 
 ### 🧰 Ferramentas & Recursos
 
-📍 https://start.spring.io/
+- https://start.spring.io/
 
-📍 Eclipse IDE
+- Eclipse IDE
 
 
 
@@ -149,13 +149,13 @@ Desafio de Projeto: Criando seu Board de Tarefas com Java
 
 ### 🧰 Ferramentas & Recursos
 
-📍 quick.databasediagrams.com
+- quick.databasediagrams.com
 
-📍 DBeaver - Gerenciador de Banco de Dados
+- DBeaver - Gerenciador de Banco de Dados
 
-📍 Biblioteca Flyway - Migrations do Banco de Dados
+- Biblioteca Flyway - Migrations do Banco de Dados
 
-📍 https://app.diagrams.net/
+- https://app.diagrams.net/
 
 
 
