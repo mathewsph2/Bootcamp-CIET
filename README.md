@@ -191,3 +191,26 @@ Monitoramento e Análise da AWS
 ## 📬 Contato
 - Coordenador / Maintainer: @mathewsph2 (GitHub)  
 - Para dúvidas e sugestões: abra uma issue no repositório
+
+
+
+## 🔓 Open Source & Licença
+
+Este repositório é um projeto **open source**, criado com fins **educacionais e de aprendizado**.
+
+Todo o conteúdo aqui apresentado é um **sumário de estudos e práticas** desenvolvidas durante o bootcamp  
+**CI&T — Backend com Java e AWS**, não possuindo vínculo oficial com a CI&T.
+
+📜 O projeto está licenciado sob a **MIT License**, o que significa que você pode:
+- Usar o conteúdo para estudo ou referência
+- Modificar e adaptar o material
+- Compartilhar livremente
+
+Desde que respeitados os termos da licença.
+
+👉 Veja o arquivo [LICENSE] para mais detalhes.
+
+
+
+> ⚠️ Este repositório é um projeto **independente e educacional**, criado por um participante do bootcamp.
+> Não é um repositório oficial da CI&T.
