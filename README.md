@@ -177,6 +177,10 @@ Segurança na nuvem com AWS
 
 Monitoramento e Análise da AWS 
 
+---
+
+
+![Certificado CI&T Backend com Java e AWS](./CIET_Backend_com_Java_e_AWS.jpg)
 
 
 --- 
